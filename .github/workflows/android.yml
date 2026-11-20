@@ -1,0 +1,48 @@
+name: Build MARCO PDF
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK
+        run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
+
+      - name: Extract project
+        run: |
+          unzip -q MARCO_PDF_source.zip -d extracted
+
+      - name: Build APK and AAB
+        working-directory: extracted/MARCO_PDF
+        run: |
+          gradle assembleDebug bundleRelease
+
+      - name: Upload APK and AAB
+        uses: actions/upload-artifact@v4
+        with:
+          name: MARCO-PDF-Files
+          path: |
+            extracted/MARCO_PDF/app/build/outputs/apk/debug/*.apk
+            extracted/MARCO_PDF/app/build/outputs/bundle/release/*.aab
+            
